@@ -27,6 +27,7 @@ public class ProjectRequest {
     private String githubUrl;
 
     private String liveUrl;
-
     private String imageUrl;
+
+    private boolean featured;
 }

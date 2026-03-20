@@ -11,8 +11,9 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
@@ -27,6 +28,25 @@ app:
   seed:
     default-user:
       enabled: ${SEED_DEFAULT_USER_ENABLED:true}
-      username: ${SEED_DEFAULT_USER_USERNAME:admin}
-      email: ${SEED_DEFAULT_USER_EMAIL:admin@spotlight.local}
+      username: ${SEED_DEFAULT_USER_USERNAME:barash1311}
+      email: ${SEED_DEFAULT_USER_EMAIL:barash1311@gmail.com}
       password: ${SEED_DEFAULT_USER_PASSWORD:admin123}
+
+jwt:
+  secret: ${JWT_SECRET:6d79537065724c6f6e674a77745365637265744b657946c4826f72537f0b1e2}
+  expiration-ms: ${JWT_EXPIRY_MS:3600000}   # 1 hour default
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+
+# ── OpenAPI / Swagger UI ──────────────────────────────────────────────────
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+    doc-expansion: list
+    default-models-expand-depth: 1
+  api-docs:
+    path: /v3/api-docs
+

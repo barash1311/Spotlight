@@ -8,37 +8,35 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "projects")
+@Table(name = "skills")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Project {
+public class Skill {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
+    private String name;
+
+    /** e.g. "Languages", "Frameworks", "Tools", "Cloud" */
     @Column(nullable = false)
-    private String title;
+    private String category;
 
-    @Column(length = 2000, nullable = false)
-    private String description;
+    /** 1–100 representing proficiency percentage */
+    private Integer proficiency;
 
-    @Column(nullable = false)
-    private String techStack;
+    /** URL to a badge/logo image */
+    private String iconUrl;
 
-    @Column(nullable = false)
-    private String githubUrl;
-
-    private String liveUrl;
-    private String imageUrl;
-
-    /** Sortable flag — pin featured projects to the top in public listing */
+    /** Lower number = displayed first in the public listing */
     @Column(nullable = false)
     @Builder.Default
-    private boolean featured = false;
+    private int displayOrder = 0;
 
     @CreationTimestamp
     @Column(updatable = false)

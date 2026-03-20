@@ -3,47 +3,40 @@ package com.barash.spotlight.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "projects")
+@Table(name = "contact_messages")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Project {
+public class ContactMessage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String title;
-
-    @Column(length = 2000, nullable = false)
-    private String description;
+    private String name;
 
     @Column(nullable = false)
-    private String techStack;
+    private String email;
 
     @Column(nullable = false)
-    private String githubUrl;
+    private String subject;
 
-    private String liveUrl;
-    private String imageUrl;
+    @Column(length = 5000, nullable = false)
+    private String message;
 
-    /** Sortable flag — pin featured projects to the top in public listing */
+    /** Set by admin after reviewing the message */
     @Column(nullable = false)
     @Builder.Default
-    private boolean featured = false;
+    private boolean read = false;
 
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 }

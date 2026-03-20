@@ -1,89 +1,72 @@
 package com.barash.spotlight.security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.Base64;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private static final long EXPIRY_MS = 1000L * 60 * 60; // 1 hour
-    
-    @Value("${jwt.secret:b9f3a7e4c2d8f1a0b6e9d4c3a1f7b2e5}")
-    private String secretKey;
+
+    private static final String ROLE_CLAIM = "role";
+
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expiration-ms}")
+    private long expirationMs;
+
+    // ── Token generation ──────────────────────────────────────────────────────
 
     public String generateToken(String username, String role) {
-        long expiry = System.currentTimeMillis() + EXPIRY_MS;
-        String payload = username + ":" + role + ":" + expiry;
-        String signature = sign(payload);
-        String rawToken = payload + ":" + signature;
-        return Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(rawToken.getBytes(StandardCharsets.UTF_8));
+        return Jwts.builder()
+                .subject(username)
+                .claim(ROLE_CLAIM, role)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(getSigningKey())
+                .compact();
     }
 
+    // ── Extraction helpers ────────────────────────────────────────────────────
+
     public String extractUsername(String token) {
-        String[] parts = decodeAndSplit(token);
-        if (parts.length != 4) {
-            throw new IllegalArgumentException("Invalid token");
-        }
-        return parts[0];
+        return getClaims(token).getSubject();
     }
 
     public String extractRole(String token) {
-        String[] parts = decodeAndSplit(token);
-        if (parts.length != 4) {
-            throw new IllegalArgumentException("Invalid token");
-        }
-        return parts[1];
+        return getClaims(token).get(ROLE_CLAIM, String.class);
     }
+
+    // ── Validation ────────────────────────────────────────────────────────────
 
     public boolean isTokenValid(String token) {
         try {
-            String[] parts = decodeAndSplit(token);
-            if (parts.length != 4) {
-                return false;
-            }
-
-            String username = parts[0];
-            String role = parts[1];
-            long expiry = Long.parseLong(parts[2]);
-            String providedSignature = parts[3];
-
-            if (username == null || username.isBlank() || role == null || role.isBlank()) {
-                return false;
-            }
-            if (System.currentTimeMillis() > expiry) {
-                return false;
-            }
-
-            String expectedSignature = sign(username + ":" + role + ":" + expiry);
-            return MessageDigest.isEqual(
-                    expectedSignature.getBytes(StandardCharsets.UTF_8),
-                    providedSignature.getBytes(StandardCharsets.UTF_8)
-            );
-        } catch (Exception e) {
+            Claims claims = getClaims(token);
+            return !claims.getExpiration().before(new Date());
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
 
-    private String[] decodeAndSplit(String token) {
-        byte[] decodedBytes = Base64.getUrlDecoder().decode(token);
-        String decoded = new String(decodedBytes, StandardCharsets.UTF_8);
-        return decoded.split(":", 4);
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
-    private String sign(String payload) {
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not sign token", e);
-        }
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }

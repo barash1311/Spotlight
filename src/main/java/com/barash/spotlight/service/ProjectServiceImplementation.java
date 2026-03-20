@@ -1,19 +1,23 @@
 package com.barash.spotlight.service;
 
+import com.barash.spotlight.dto.PageResponse;
 import com.barash.spotlight.dto.ProjectRequest;
 import com.barash.spotlight.dto.ProjectResponse;
 import com.barash.spotlight.entity.Project;
 import com.barash.spotlight.exception.ResourceNotFoundException;
 import com.barash.spotlight.repository.ProjectRepository;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@AllArgsConstructor
-public class ProjectServiceImplementation implements ProjectService{
+@RequiredArgsConstructor
+public class ProjectServiceImplementation implements ProjectService {
+
     private final ProjectRepository projectRepository;
 
     @Override
@@ -25,17 +29,35 @@ public class ProjectServiceImplementation implements ProjectService{
                 .githubUrl(request.getGithubUrl())
                 .liveUrl(request.getLiveUrl())
                 .imageUrl(request.getImageUrl())
-                .createdAt(LocalDateTime.now())
+                .featured(request.isFeatured())
                 .build();
 
-        Project saved = projectRepository.save(project);
+        return mapToResponse(projectRepository.save(project));
+    }
 
-        return mapToResponse(saved);
+    @Override
+    public PageResponse<ProjectResponse> getProjects(int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size,
+                Sort.by(Sort.Direction.DESC, "featured")
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt")));
+
+        Page<Project> result = projectRepository.findAll(pageable);
+
+        return PageResponse.<ProjectResponse>builder()
+                .content(result.getContent().stream().map(this::mapToResponse).toList())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .last(result.isLast())
+                .build();
     }
 
     @Override
     public List<ProjectResponse> getAllProjects() {
-        return projectRepository.findAll()
+        return projectRepository
+                .findAll(Sort.by(Sort.Direction.DESC, "featured")
+                             .and(Sort.by(Sort.Direction.DESC, "createdAt")))
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
@@ -43,20 +65,12 @@ public class ProjectServiceImplementation implements ProjectService{
 
     @Override
     public ProjectResponse getProjectById(Long id) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
-        return mapToResponse(project);
-    }
-
-    @Override
-    public void deleteProject(Long id) {
-        projectRepository.deleteById(id);
+        return mapToResponse(findOrThrow(id));
     }
 
     @Override
     public ProjectResponse updateProject(Long id, ProjectRequest request) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+        Project project = findOrThrow(id);
 
         project.setTitle(request.getTitle());
         project.setDescription(request.getDescription());
@@ -64,22 +78,38 @@ public class ProjectServiceImplementation implements ProjectService{
         project.setGithubUrl(request.getGithubUrl());
         project.setLiveUrl(request.getLiveUrl());
         project.setImageUrl(request.getImageUrl());
+        project.setFeatured(request.isFeatured());
 
-        Project updated = projectRepository.save(project);
-
-        return mapToResponse(updated);
+        return mapToResponse(projectRepository.save(project));
     }
 
-    private ProjectResponse mapToResponse(Project project) {
+    @Override
+    public void deleteProject(Long id) {
+        if (!projectRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Project not found with id: " + id);
+        }
+        projectRepository.deleteById(id);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private Project findOrThrow(Long id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
+    }
+
+    private ProjectResponse mapToResponse(Project p) {
         return ProjectResponse.builder()
-                .id(project.getId())
-                .title(project.getTitle())
-                .description(project.getDescription())
-                .techStack(project.getTechStack())
-                .githubUrl(project.getGithubUrl())
-                .liveUrl(project.getLiveUrl())
-                .imageUrl(project.getImageUrl())
-                .createdAt(project.getCreatedAt())
+                .id(p.getId())
+                .title(p.getTitle())
+                .description(p.getDescription())
+                .techStack(p.getTechStack())
+                .githubUrl(p.getGithubUrl())
+                .liveUrl(p.getLiveUrl())
+                .imageUrl(p.getImageUrl())
+                .featured(p.isFeatured())
+                .createdAt(p.getCreatedAt())
+                .updatedAt(p.getUpdatedAt())
                 .build();
     }
 }

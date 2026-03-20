@@ -1,11 +1,9 @@
 package com.barash.spotlight.config;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-@Configuration
+/**
+ * Reserved for future application-level beans.
+ * PasswordEncoder is defined in SecurityConfig to keep security beans co-located.
+ */
 public class AppConfig {
-
+    // intentionally empty
 }
