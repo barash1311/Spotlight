@@ -1,0 +1,32 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: Spotlight
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/portfolio_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+
+
+
+server:
+   port: 8080
+
+app:
+  seed:
+    default-user:
+      enabled: ${SEED_DEFAULT_USER_ENABLED:true}
+      username: ${SEED_DEFAULT_USER_USERNAME:admin}
+      email: ${SEED_DEFAULT_USER_EMAIL:admin@spotlight.local}
+      password: ${SEED_DEFAULT_USER_PASSWORD:admin123}
