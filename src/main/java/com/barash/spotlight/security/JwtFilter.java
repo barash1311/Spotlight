@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +17,8 @@ import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtFilter.class);
 
     private final JwtUtil jwtUtil;
 
@@ -33,29 +37,33 @@ public class JwtFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
-            if (!jwtUtil.isTokenValid(token)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"success\":false,\"message\":\"Invalid or expired token\",\"status\":401}");
-                return;
-            }
+            try {
+                if (jwtUtil.isTokenValid(token)
+                        && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                String username = jwtUtil.extractUsername(token);
-                // Role stored in JWT as e.g. "ADMIN" — Spring expects "ROLE_ADMIN"
-                String rawRole  = jwtUtil.extractRole(token);
-                String authority = rawRole.startsWith("ROLE_") ? rawRole : "ROLE_" + rawRole;
+                    String username = jwtUtil.extractUsername(token);
+                    String rawRole  = jwtUtil.extractRole(token);
+                    String authority = rawRole.startsWith("ROLE_") ? rawRole : "ROLE_" + rawRole;
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                List.of(new SimpleGrantedAuthority(authority))
-                        );
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    username,
+                                    null,
+                                    List.of(new SimpleGrantedAuthority(authority))
+                            );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    log.debug("Authenticated user '{}' with authority '{}'", username, authority);
+                }
+            } catch (Exception e) {
+                // Token is malformed/expired/invalid — don't set auth context.
+                // Spring Security will return 401 only if the endpoint actually requires auth.
+                log.debug("JWT validation failed: {}", e.getMessage());
             }
         }
 
+        // ALWAYS continue the filter chain — let Spring Security decide access.
         filterChain.doFilter(request, response);
     }
 }
+

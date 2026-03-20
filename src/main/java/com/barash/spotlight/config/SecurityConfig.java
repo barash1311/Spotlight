@@ -1,10 +1,15 @@
 package com.barash.spotlight.config;
 
+import com.barash.spotlight.dto.ApiResponse;
 import com.barash.spotlight.security.JwtFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,6 +29,9 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
     @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:5173}")
     private String allowedOriginsRaw;
 
@@ -34,17 +42,22 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // ── Custom 401 / 403 JSON responses ─────────────────────────────────
+            // ── Custom 401 / 403 JSON responses (consistent ApiResponse format) ──
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {
+                    log.warn("401 Unauthorised: {} {}", request.getMethod(), request.getRequestURI());
                     response.setStatus(401);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\":\"Unauthorised — authentication required\",\"status\":401}");
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    objectMapper.writeValue(response.getOutputStream(),
+                            ApiResponse.error("Unauthorised — authentication required"));
                 })
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    log.warn("403 Forbidden: {} {} by '{}'", request.getMethod(), request.getRequestURI(),
+                            request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "anonymous");
                     response.setStatus(403);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\":\"Forbidden — insufficient privileges\",\"status\":403}");
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    objectMapper.writeValue(response.getOutputStream(),
+                            ApiResponse.error("Forbidden — insufficient privileges"));
                 })
             )
 
@@ -95,3 +108,4 @@ public class SecurityConfig {
         return source;
     }
 }
+
