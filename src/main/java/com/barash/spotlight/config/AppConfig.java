@@ -6,4 +6,5 @@ package com.barash.spotlight.config;
  */
 public class AppConfig {
     // intentionally empty
+    //inplemented the fuctions in another file
 }
