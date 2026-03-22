@@ -110,9 +110,9 @@ public class SecurityConfig {
         log.info("CORS policy initialized with origins: {}", origins);
 
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(origins);
+        cfg.setAllowedOriginPatterns(origins); // Use patterns for better matching
         cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
-        cfg.setAllowedHeaders(Arrays.asList("*")); // Allow all headers
+        cfg.setAllowedHeaders(Arrays.asList("*")); 
         cfg.setExposedHeaders(Arrays.asList("Authorization", "Link", "X-Total-Count"));
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);
