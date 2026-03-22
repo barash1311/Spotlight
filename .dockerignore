@@ -1,0 +1,28 @@
+# Build artifacts
+target/
+*.jar
+*.war
+
+# Environment variables
+.env
+.env.local
+
+# IDE settings
+.idea/
+.settings/
+.project
+.classpath
+*.iml
+
+# Logs
+*.log
+nohup_boot.out
+boot.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
