@@ -98,7 +98,13 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        List<String> origins = Arrays.asList(allowedOriginsRaw.split(","));
+        // Robust splitting that handles spaces after commas
+        List<String> origins = Arrays.stream(allowedOriginsRaw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        log.info("CORS policy initialized with origins: {}", origins);
 
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(origins);
