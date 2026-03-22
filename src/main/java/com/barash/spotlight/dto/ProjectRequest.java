@@ -2,15 +2,7 @@ package com.barash.spotlight.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class ProjectRequest {
 
     @NotBlank(message = "Title is required")
@@ -20,8 +12,10 @@ public class ProjectRequest {
     @Size(min = 10, message = "Description must be at least 10 characters")
     private String description;
 
-    @NotBlank(message = "Tech stack is required")
-    private String techStack;
+    private String shortDescription;
+
+    @NotBlank(message = "Technologies are required")
+    private String technologies; // Updated from techStack
 
     @NotBlank(message = "GitHub URL is required")
     private String githubUrl;
@@ -30,4 +24,24 @@ public class ProjectRequest {
     private String imageUrl;
 
     private boolean featured;
+
+    public ProjectRequest() {}
+
+    // Getters and Setters
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getShortDescription() { return shortDescription; }
+    public void setShortDescription(String shortDescription) { this.shortDescription = shortDescription; }
+    public String getTechnologies() { return technologies; }
+    public void setTechnologies(String tech) { this.technologies = tech; }
+    public String getGithubUrl() { return githubUrl; }
+    public void setGithubUrl(String url) { this.githubUrl = url; }
+    public String getLiveUrl() { return liveUrl; }
+    public void setLiveUrl(String url) { this.liveUrl = url; }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String url) { this.imageUrl = url; }
+    public boolean isFeatured() { return featured; }
+    public void setFeatured(boolean featured) { this.featured = featured; }
 }

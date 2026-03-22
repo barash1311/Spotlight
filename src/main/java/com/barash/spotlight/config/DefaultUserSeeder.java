@@ -3,8 +3,6 @@ package com.barash.spotlight.config;
 import com.barash.spotlight.entity.Roles;
 import com.barash.spotlight.entity.User;
 import com.barash.spotlight.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -13,7 +11,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 public class DefaultUserSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -31,8 +28,13 @@ public class DefaultUserSeeder implements CommandLineRunner {
     @Value("${app.seed.default-user.password:admin123}")
     private String rawPassword;
 
+    public DefaultUserSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
     @Override
-    public void run(String @NonNull ... args) {
+    public void run(String... args) {
         if (!seedEnabled) {
             return;
         }

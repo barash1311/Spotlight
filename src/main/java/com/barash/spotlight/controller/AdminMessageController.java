@@ -4,22 +4,21 @@ import com.barash.spotlight.dto.*;
 import com.barash.spotlight.service.ContactService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * ADMIN message endpoints — all require ROLE_ADMIN.
- */
 @RestController
 @RequestMapping("/api/admin/messages")
-@RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin — Messages", description = "Contact message inbox (ADMIN only)")
 public class AdminMessageController {
 
     private final ContactService contactService;
+
+    public AdminMessageController(ContactService contactService) {
+        this.contactService = contactService;
+    }
 
     @Operation(summary = "Get paginated inbox (newest first)")
     @GetMapping
@@ -45,5 +44,10 @@ public class AdminMessageController {
                 .message("Message deleted")
                 .build());
     }
-}
 
+    @Operation(summary = "Get unread messages count")
+    @GetMapping("/count-unread")
+    public ResponseEntity<ApiResponse<Long>> getUnreadCount() {
+        return ResponseEntity.ok(ApiResponse.ok(contactService.countUnreadMessages()));
+    }
+}

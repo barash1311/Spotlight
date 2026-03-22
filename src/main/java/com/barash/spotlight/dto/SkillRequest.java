@@ -1,12 +1,7 @@
 package com.barash.spotlight.dto;
 
 import jakarta.validation.constraints.*;
-import lombok.*;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class SkillRequest {
 
     @NotBlank(message = "Skill name is required")
@@ -20,6 +15,19 @@ public class SkillRequest {
     private Integer proficiency;
 
     private String iconUrl;
-
     private int displayOrder;
+
+    public SkillRequest() {}
+
+    // Getters and Setters
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public Integer getProficiency() { return proficiency; }
+    public void setProficiency(Integer proficiency) { this.proficiency = proficiency; }
+    public String getIconUrl() { return iconUrl; }
+    public void setIconUrl(String iconUrl) { this.iconUrl = iconUrl; }
+    public int getDisplayOrder() { return displayOrder; }
+    public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
 }

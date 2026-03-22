@@ -70,10 +70,14 @@ public class SecurityConfig {
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                 // Public read endpoints — no token needed
+                .requestMatchers(HttpMethod.GET, "/api/content/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/projects/public/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/skills").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/profile").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/experiences").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/resumes/**").permitAll()
+                .requestMatchers(HttpMethod.HEAD, "/api/resumes/**").permitAll()
 
                 // Admin endpoints — ADMIN role required
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -81,6 +85,7 @@ public class SecurityConfig {
                 // Everything else must at least be authenticated
                 .anyRequest().authenticated()
             )
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

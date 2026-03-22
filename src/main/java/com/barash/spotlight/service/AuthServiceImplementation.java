@@ -6,20 +6,24 @@ import com.barash.spotlight.entity.User;
 import com.barash.spotlight.repository.UserRepository;
 import com.barash.spotlight.security.JwtUtil;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
-public class AuthServiceImplementation implements AuthService{
+public class AuthServiceImplementation implements AuthService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+
+    public AuthServiceImplementation(UserRepository userRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+        this.passwordEncoder = passwordEncoder;
+    }
+
     @Override
     public LoginResponse login(LoginRequest request) {
-
         String identifier = request.getIdentifier() != null ? request.getIdentifier().trim() : null;
         String password = request.getPassword();
 
@@ -48,9 +52,8 @@ public class AuthServiceImplementation implements AuthService{
                 .token(token)
                 .build();
     }
+
     private boolean isEmail(String identifier){
         return identifier.contains("@");
     }
-
-
 }

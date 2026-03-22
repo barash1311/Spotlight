@@ -1,46 +1,68 @@
 package com.barash.spotlight.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.time.Instant;
 
-/**
- * Unified API envelope used by every endpoint so the Next.js client
- * can rely on a consistent shape:
- * <pre>
- * { "success": true,  "data": {...},  "message": null   }
- * { "success": false, "data": null,   "message": "..." }
- * </pre>
- */
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
     private boolean success;
     private String  message;
     private T       data;
-
-    @Builder.Default
     private Instant timestamp = Instant.now();
 
-    // ── Factory helpers ───────────────────────────────────────────────────────
+    public ApiResponse() {}
+
+    public boolean isSuccess() { return success; }
+    public void setSuccess(boolean success) { this.success = success; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    public T getData() { return data; }
+    public void setData(T data) { this.data = data; }
+    public Instant getTimestamp() { return timestamp; }
 
     public static <T> ApiResponse<T> ok(T data) {
-        return ApiResponse.<T>builder().success(true).data(data).build();
+        ApiResponse<T> resp = new ApiResponse<>();
+        resp.success = true;
+        resp.data = data;
+        return resp;
     }
 
     public static <T> ApiResponse<T> ok(T data, String message) {
-        return ApiResponse.<T>builder().success(true).data(data).message(message).build();
+        ApiResponse<T> resp = ok(data);
+        resp.message = message;
+        return resp;
     }
 
     public static <T> ApiResponse<T> error(String message) {
-        return ApiResponse.<T>builder().success(false).message(message).build();
+        ApiResponse<T> resp = new ApiResponse<>();
+        resp.success = false;
+        resp.message = message;
+        return resp;
+    }
+
+    public static <T> ApiResponseBuilder<T> builder() {
+        return new ApiResponseBuilder<>();
+    }
+
+    public static class ApiResponseBuilder<T> {
+        private boolean success;
+        private String  message;
+        private T       data;
+        private Instant timestamp = Instant.now();
+
+        public ApiResponseBuilder<T> success(boolean s) { this.success = s; return this; }
+        public ApiResponseBuilder<T> message(String m) { this.message = m; return this; }
+        public ApiResponseBuilder<T> data(T d) { this.data = d; return this; }
+        public ApiResponseBuilder<T> timestamp(Instant t) { this.timestamp = t; return this; }
+        
+        public ApiResponse<T> build() {
+            ApiResponse<T> r = new ApiResponse<>();
+            r.success = this.success;
+            r.message = this.message;
+            r.data = this.data;
+            r.timestamp = this.timestamp;
+            return r;
+        }
     }
 }

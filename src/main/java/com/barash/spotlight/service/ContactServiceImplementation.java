@@ -6,16 +6,18 @@ import com.barash.spotlight.dto.PageResponse;
 import com.barash.spotlight.entity.ContactMessage;
 import com.barash.spotlight.exception.ResourceNotFoundException;
 import com.barash.spotlight.repository.ContactMessageRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class ContactServiceImplementation implements ContactService {
 
     private final ContactMessageRepository contactMessageRepository;
+
+    public ContactServiceImplementation(ContactMessageRepository contactMessageRepository) {
+        this.contactMessageRepository = contactMessageRepository;
+    }
 
     @Override
     public ContactResponse submitMessage(ContactRequest request) {
@@ -59,7 +61,10 @@ public class ContactServiceImplementation implements ContactService {
         contactMessageRepository.deleteById(id);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    @Override
+    public long countUnreadMessages() {
+        return contactMessageRepository.countByReadFalse();
+    }
 
     private ContactMessage findOrThrow(Long id) {
         return contactMessageRepository.findById(id)

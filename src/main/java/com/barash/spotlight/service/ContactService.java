@@ -9,4 +9,5 @@ public interface ContactService {
     PageResponse<ContactResponse> getMessages(int page, int size);
     ContactResponse          markAsRead(Long id);
     void                     deleteMessage(Long id);
+    long                     countUnreadMessages();
 }

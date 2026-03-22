@@ -15,9 +15,12 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     // ── 404 Not Found ─────────────────────────────────────────────────────────
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException ex) {
+        log.warn("Resource Not Found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(ex.getMessage()));
     }
@@ -25,6 +28,7 @@ public class GlobalExceptionHandler {
     // ── 409 Conflict ──────────────────────────────────────────────────────────
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicate(DuplicateResourceException ex) {
+        log.warn("Conflict Error: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getMessage()));
     }
@@ -32,6 +36,7 @@ public class GlobalExceptionHandler {
     // ── 401 Unauthorised ──────────────────────────────────────────────────────
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
+        log.warn("Auth Failed: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("Invalid username/email or password"));
     }
@@ -39,6 +44,7 @@ public class GlobalExceptionHandler {
     // ── 403 Forbidden ─────────────────────────────────────────────────────────
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("Access Denied: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("Forbidden — insufficient privileges"));
     }
@@ -47,7 +53,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidation(
             MethodArgumentNotValidException ex) {
-
+        log.warn("Validation Failure: {} field(s)", ex.getBindingResult().getFieldErrorCount());
+        
         Map<String, String> fieldErrors = new HashMap<>();
         ex.getBindingResult().getFieldErrors()
           .forEach(e -> fieldErrors.put(e.getField(), e.getDefaultMessage()));
@@ -63,8 +70,8 @@ public class GlobalExceptionHandler {
     // ── 500 Catch-all ─────────────────────────────────────────────────────────
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
-        // Log the real cause server-side; never expose stack traces to clients
+        log.error("CRITICAL_SYSTEM_ERROR: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("An unexpected error occurred. Please try again later."));
+                .body(ApiResponse.error("Internal Server Error: " + ex.getMessage()));
     }
 }
