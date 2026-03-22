@@ -1,49 +1,29 @@
 package com.barash.spotlight.service;
 
-import com.barash.spotlight.dto.PageResponse;
 import com.barash.spotlight.dto.ProjectRequest;
 import com.barash.spotlight.dto.ProjectResponse;
 import com.barash.spotlight.entity.Project;
 import com.barash.spotlight.exception.ResourceNotFoundException;
 import com.barash.spotlight.repository.ProjectRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ProjectServiceImplementation implements ProjectService {
 
     private final ProjectRepository projectRepository;
 
-    @Override
-    public ProjectResponse createProject(ProjectRequest request) {
-        Project project = Project.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .techStack(request.getTechStack())
-                .githubUrl(request.getGithubUrl())
-                .liveUrl(request.getLiveUrl())
-                .imageUrl(request.getImageUrl())
-                .featured(request.isFeatured())
-                .build();
-
-        return mapToResponse(projectRepository.save(project));
+    public ProjectServiceImplementation(ProjectRepository projectRepository) {
+        this.projectRepository = projectRepository;
     }
 
     @Override
-    public PageResponse<ProjectResponse> getProjects(int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size,
-                Sort.by(Sort.Direction.DESC, "featured")
-                    .and(Sort.by(Sort.Direction.DESC, "createdAt")));
-
-        Page<Project> result = projectRepository.findAll(pageable);
-
-        return PageResponse.<ProjectResponse>builder()
+    public com.barash.spotlight.dto.PageResponse<ProjectResponse> getProjects(int page, int size) {
+        Page<Project> result = projectRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size));
+        
+        return com.barash.spotlight.dto.PageResponse.<ProjectResponse>builder()
                 .content(result.getContent().stream().map(this::mapToResponse).toList())
                 .page(result.getNumber())
                 .size(result.getSize())
@@ -54,48 +34,27 @@ public class ProjectServiceImplementation implements ProjectService {
     }
 
     @Override
-    public List<ProjectResponse> getAllProjects() {
-        return projectRepository
-                .findAll(Sort.by(Sort.Direction.DESC, "featured")
-                             .and(Sort.by(Sort.Direction.DESC, "createdAt")))
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+    public ProjectResponse getProjectById(Long id) {
+        return mapToResponse(projectRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Project not found")));
     }
 
     @Override
-    public ProjectResponse getProjectById(Long id) {
-        return mapToResponse(findOrThrow(id));
+    public ProjectResponse createProject(ProjectRequest request) {
+        Project p = new Project();
+        updateEntity(p, request);
+        return mapToResponse(projectRepository.save(p));
     }
 
     @Override
     public ProjectResponse updateProject(Long id, ProjectRequest request) {
-        Project project = findOrThrow(id);
-
-        project.setTitle(request.getTitle());
-        project.setDescription(request.getDescription());
-        project.setTechStack(request.getTechStack());
-        project.setGithubUrl(request.getGithubUrl());
-        project.setLiveUrl(request.getLiveUrl());
-        project.setImageUrl(request.getImageUrl());
-        project.setFeatured(request.isFeatured());
-
-        return mapToResponse(projectRepository.save(project));
+        Project p = projectRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+        updateEntity(p, request);
+        return mapToResponse(projectRepository.save(p));
     }
 
     @Override
     public void deleteProject(Long id) {
-        if (!projectRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Project not found with id: " + id);
-        }
         projectRepository.deleteById(id);
-    }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private Project findOrThrow(Long id) {
-        return projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
     }
 
     private ProjectResponse mapToResponse(Project p) {
@@ -103,13 +62,24 @@ public class ProjectServiceImplementation implements ProjectService {
                 .id(p.getId())
                 .title(p.getTitle())
                 .description(p.getDescription())
-                .techStack(p.getTechStack())
+                .shortDescription(p.getShortDescription())
+                .technologies(p.getTechnologies())
                 .githubUrl(p.getGithubUrl())
                 .liveUrl(p.getLiveUrl())
                 .imageUrl(p.getImageUrl())
                 .featured(p.isFeatured())
                 .createdAt(p.getCreatedAt())
-                .updatedAt(p.getUpdatedAt())
                 .build();
+    }
+
+    private void updateEntity(Project p, ProjectRequest r) {
+        p.setTitle(r.getTitle());
+        p.setDescription(r.getDescription());
+        p.setShortDescription(r.getShortDescription());
+        p.setTechnologies(r.getTechnologies());
+        p.setGithubUrl(r.getGithubUrl());
+        p.setLiveUrl(r.getLiveUrl());
+        p.setImageUrl(r.getImageUrl());
+        p.setFeatured(r.isFeatured());
     }
 }

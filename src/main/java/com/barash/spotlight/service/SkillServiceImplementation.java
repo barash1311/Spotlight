@@ -3,93 +3,67 @@ package com.barash.spotlight.service;
 import com.barash.spotlight.dto.SkillRequest;
 import com.barash.spotlight.dto.SkillResponse;
 import com.barash.spotlight.entity.Skill;
-import com.barash.spotlight.exception.DuplicateResourceException;
 import com.barash.spotlight.exception.ResourceNotFoundException;
 import com.barash.spotlight.repository.SkillRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class SkillServiceImplementation implements SkillService {
 
     private final SkillRepository skillRepository;
 
-    @Override
-    public SkillResponse createSkill(SkillRequest request) {
-        if (skillRepository.existsByNameIgnoreCase(request.getName())) {
-            throw new DuplicateResourceException("Skill '" + request.getName() + "' already exists");
-        }
-        Skill skill = Skill.builder()
-                .name(request.getName())
-                .category(request.getCategory())
-                .proficiency(request.getProficiency())
-                .iconUrl(request.getIconUrl())
-                .displayOrder(request.getDisplayOrder())
-                .build();
-
-        return mapToResponse(skillRepository.save(skill));
+    public SkillServiceImplementation(SkillRepository skillRepository) {
+        this.skillRepository = skillRepository;
     }
 
     @Override
     public List<SkillResponse> getAllSkills() {
-        return skillRepository.findAllByOrderByDisplayOrderAscNameAsc()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        return skillRepository.findAll().stream().map(this::mapToResponse).toList();
     }
 
     @Override
     public SkillResponse getSkillById(Long id) {
-        return mapToResponse(findOrThrow(id));
+        return mapToResponse(skillRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Skill not found")));
     }
 
     @Override
-    public SkillResponse updateSkill(Long id, SkillRequest request) {
-        Skill skill = findOrThrow(id);
-
-        // Allow rename only if the new name isn't already taken by a different skill
-        if (!skill.getName().equalsIgnoreCase(request.getName())
-                && skillRepository.existsByNameIgnoreCase(request.getName())) {
-            throw new DuplicateResourceException("Skill '" + request.getName() + "' already exists");
-        }
-
+    public SkillResponse createSkill(SkillRequest request) {
+        Skill skill = new Skill();
         skill.setName(request.getName());
         skill.setCategory(request.getCategory());
         skill.setProficiency(request.getProficiency());
         skill.setIconUrl(request.getIconUrl());
         skill.setDisplayOrder(request.getDisplayOrder());
+        return mapToResponse(skillRepository.save(skill));
+    }
 
+    @Override
+    public SkillResponse updateSkill(Long id, SkillRequest request) {
+        Skill skill = skillRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Skill not found"));
+        skill.setName(request.getName());
+        skill.setCategory(request.getCategory());
+        skill.setProficiency(request.getProficiency());
+        skill.setIconUrl(request.getIconUrl());
+        skill.setDisplayOrder(request.getDisplayOrder());
         return mapToResponse(skillRepository.save(skill));
     }
 
     @Override
     public void deleteSkill(Long id) {
-        if (!skillRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Skill not found with id: " + id);
-        }
         skillRepository.deleteById(id);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private Skill findOrThrow(Long id) {
-        return skillRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Skill not found with id: " + id));
-    }
-
-    private SkillResponse mapToResponse(Skill skill) {
+    private SkillResponse mapToResponse(Skill s) {
         return SkillResponse.builder()
-                .id(skill.getId())
-                .name(skill.getName())
-                .category(skill.getCategory())
-                .proficiency(skill.getProficiency())
-                .iconUrl(skill.getIconUrl())
-                .displayOrder(skill.getDisplayOrder())
-                .createdAt(skill.getCreatedAt())
-                .updatedAt(skill.getUpdatedAt())
+                .id(s.getId())
+                .name(s.getName())
+                .category(s.getCategory())
+                .proficiency(s.getProficiency())
+                .iconUrl(s.getIconUrl())
+                .displayOrder(s.getDisplayOrder())
+                .createdAt(s.getCreatedAt())
+                .updatedAt(s.getUpdatedAt())
                 .build();
     }
 }
