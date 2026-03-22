@@ -63,6 +63,9 @@ public class SecurityConfig {
 
             // ── Route security ────────────────────────────────────────────────
             .authorizeHttpRequests(auth -> auth
+                // Allow root access for Render health checks and error page
+                .requestMatchers("/", "/index.html", "/static/**", "/error").permitAll()
+
                 // Auth endpoint — always public
                 .requestMatchers("/api/auth/**").permitAll()
 
@@ -74,7 +77,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/projects/public/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/skills").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/profile").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/experiences").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/experiences/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/resumes/**").permitAll()
                 .requestMatchers(HttpMethod.HEAD, "/api/resumes/**").permitAll()
