@@ -22,13 +22,16 @@ public class Project {
     @Column(length = 500)
     private String shortDescription;
 
-    @Column(name = "tech_stack", nullable = false)
+    @Column(name = "tech_stack", length = 1000, nullable = false)
     private String technologies; // Renamed from techStack but mapped back to old name
 
-    @Column(nullable = false)
+    @Column(length = 1000, nullable = false)
     private String githubUrl;
 
+    @Column(length = 1000)
     private String liveUrl;
+    
+    @Column(length = 1000)
     private String imageUrl;
 
     private boolean featured = false; // Changed from Boolean to boolean for isFeatured
