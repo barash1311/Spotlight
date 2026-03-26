@@ -79,6 +79,16 @@ public class ResumeServiceImplementation implements ResumeService {
     @Override
     public Resource loadResumeAsResource(Long id) {
         Resume resume = resumeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Resume not found"));
+        
+        if (resume.getData() != null && resume.getData().length > 0) {
+            return new org.springframework.core.io.ByteArrayResource(resume.getData()) {
+                @Override
+                public String getFilename() {
+                    return resume.getFileName();
+                }
+            };
+        }
+        
         try {
             Path filePath = this.fileStorageLocation.resolve(resume.getFileName()).normalize();
             Resource resource = new UrlResource(filePath.toUri());
